@@ -38,8 +38,6 @@ class Products with ChangeNotifier {
     ),
   ];
 
-  var _showFavoritesOnly = false;
-
   List<Product> get items {
     return [..._items];
   }
@@ -52,8 +50,31 @@ class Products with ChangeNotifier {
     return _items.firstWhere((product) => product.id == id);
   }
 
+  void deleteProduct(String id) {
+    _items.removeWhere((product) => product.id == id);
+    notifyListeners();
+  }
+
+  void updateProduct(String id, Product newProduct) {
+    final productIndex = _items.indexWhere((product) => product.id == id);
+
+    if (productIndex > 0) {
+      _items[productIndex] = newProduct;
+      notifyListeners();
+    }
+  }
+
   void addProduct(Product value) {
-    _items.add(value);
+    final newProduct = Product(
+      id: DateTime.now().toString(),
+      title: value.title,
+      price: value.price,
+      description: value.description,
+      imageUrl: value.imageUrl,
+    );
+
+    _items.add(newProduct);
+
     notifyListeners();
   }
 }
