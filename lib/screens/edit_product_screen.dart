@@ -80,9 +80,13 @@ class _EditProductStateScreen extends State<EditProductScreen> {
       _isLoading = true;
     });
     if (_fromProduct) {
-      Provider.of<Products>(context, listen: false).updateProduct(_editedProduct.id, _editedProduct);
-      Navigator.of(context).pop();
-      _isLoading = false;
+      Provider.of<Products>(context, listen: false).updateProduct(_editedProduct.id, _editedProduct).then((response) {
+        Navigator.of(context).pop();
+
+        setState(() {
+          _isLoading = false;
+        });
+      });
     } else {
       Provider.of<Products>(context, listen: false).addProduct(_editedProduct).catchError((error) {
         return showDialog(
