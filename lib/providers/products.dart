@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 import './product.dart';
 
@@ -64,17 +66,35 @@ class Products with ChangeNotifier {
     }
   }
 
-  void addProduct(Product value) {
-    final newProduct = Product(
-      id: DateTime.now().toString(),
-      title: value.title,
-      price: value.price,
-      description: value.description,
-      imageUrl: value.imageUrl,
-    );
+  Future<void> addProduct(Product product) async {
+    const String url = 'https://study-flutter.firebaseio.com/products.json';
 
-    _items.add(newProduct);
+    try {
+      final response = await http.post(
+        url,
+        body: json.encode({
+          'title': product.title,
+          'price': product.price,
+          'description': product.description,
+          'imageUrl': product.imageUrl,
+          'isFavorite': product.isFavorite,
+        })
+      );
 
-    notifyListeners();
+      final newProduct = Product(
+        id: json.decode(response.body)['name'],
+        title: product.title,
+        price: product.price,
+        description: product.description,
+        imageUrl: product.imageUrl,
+      );
+
+      _items.add(newProduct);
+
+      notifyListeners();
+    } catch (error) {
+      print(error);
+      throw error;
+    }
   }
 }

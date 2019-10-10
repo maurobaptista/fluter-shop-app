@@ -18,6 +18,7 @@ class _EditProductStateScreen extends State<EditProductScreen> {
   final _imageUrlController = TextEditingController();
   final _form = GlobalKey<FormState>();
   bool _isInit = true;
+  bool _isLoading = false;
   bool _fromProduct = false;
   var _editedProduct = Product(
     id: DateTime.now().toString(),
@@ -75,14 +76,40 @@ class _EditProductStateScreen extends State<EditProductScreen> {
 
     _form.currentState.save();
 
+    setState(() {
+      _isLoading = true;
+    });
     if (_fromProduct) {
       Provider.of<Products>(context, listen: false).updateProduct(_editedProduct.id, _editedProduct);
+      Navigator.of(context).pop();
+      _isLoading = false;
     } else {
-      Provider.of<Products>(context, listen: false).addProduct(_editedProduct);
-    }
+      Provider.of<Products>(context, listen: false).addProduct(_editedProduct).catchError((error) {
+        return showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text('An error occured!'),
+              content: Text(error.toString()),
+              actions: <Widget>[
+                FlatButton(
+                  child: Text('Okay'),
+                  onPressed:() {
+                    Navigator.of(context).pop();
+                  }
+                )
+              ],
+            );
+          },
+        );
+      }).then((response) {
+        Navigator.of(context).pop();
 
-    
-    Navigator.of(context).pop();
+        setState(() {
+          _isLoading = false;
+        });
+      });
+    }
   }
 
   @override
@@ -97,7 +124,11 @@ class _EditProductStateScreen extends State<EditProductScreen> {
           )
         ],
       ),
-      body: Padding(
+      body: _isLoading
+        ? Center(
+          child: CircularProgressIndicator(),
+        )
+        : Padding(
         padding: EdgeInsets.all(16),
         child: Form(
           key: _form,
