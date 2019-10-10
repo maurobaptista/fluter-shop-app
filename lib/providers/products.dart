@@ -24,7 +24,7 @@ class Products with ChangeNotifier {
   }
 
   Future<void> deleteProduct(String id) async {
-    final deleteUrl = '${baseUrl}/${id}.js1on';
+    final deleteUrl = '${baseUrl}/${id}.json';
     final existingProductIndex = _items.indexWhere((product) => product.id == id);
     var existingProduct = _items[existingProductIndex];
     
