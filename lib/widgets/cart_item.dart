@@ -50,7 +50,6 @@ class CartItem extends StatelessWidget {
             ],
           ),
         );
-        return Future.value(true);
       },
       onDismissed: (direction) {
         Provider.of<Cart.Cart>(context, listen: false).removeItem(id);
