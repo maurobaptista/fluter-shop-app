@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:provider/provider.dart';
 
 import '../models/http_exception.dart';
 import './product.dart';
@@ -8,6 +9,9 @@ import './product.dart';
 class Products with ChangeNotifier {
   final String baseUrl = 'https://study-flutter.firebaseio.com/products';
   final String url = 'https://study-flutter.firebaseio.com/products.json';
+  final String authToken;
+
+  Products(this.authToken, this._items);
 
   List<Product> _items = [];
 
@@ -17,6 +21,11 @@ class Products with ChangeNotifier {
 
   List<Product> get favoriteItems {
     return _items.where((product) => product.isFavorite).toList();
+  }
+
+  String addAuth(String url)
+  {
+    return '${url}?auth=${authToken}';
   }
 
   Product findById(String id) {
@@ -31,7 +40,7 @@ class Products with ChangeNotifier {
     _items.removeAt(existingProductIndex);
     notifyListeners();
 
-    final response = await http.delete(deleteUrl);
+    final response = await http.delete(addAuth(deleteUrl));
 
     if (response.statusCode >= 400) {
       _items.insert(existingProductIndex, existingProduct);
@@ -51,9 +60,9 @@ class Products with ChangeNotifier {
 
     if (productIndex >= 0) {
       final patchUrl = '${baseUrl}/${id}.json';
-      print(patchUrl);
+      
       await http.patch(
-        patchUrl,
+        addAuth(patchUrl),
         body: json.encode({
           'title': newProduct.title,
           'price': newProduct.price,
@@ -70,7 +79,7 @@ class Products with ChangeNotifier {
 
   Future<void> getProducts() async {
     try {
-      final response = await http.get(url);
+      final response = await http.get(addAuth(url));
       final extractedData = json.decode(response.body) as Map<String, dynamic>;
       final List<Product> loadedProducts = [];
 
@@ -100,7 +109,7 @@ class Products with ChangeNotifier {
   Future<void> addProduct(Product product) async {
     try {
       final response = await http.post(
-        url,
+        addAuth(url),
         body: json.encode({
           'title': product.title,
           'price': product.price,
