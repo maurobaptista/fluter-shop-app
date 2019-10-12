@@ -24,19 +24,17 @@ void _setFavoriteValue(bool newValue) {
   notifyListeners();
 }
 
-  void toggleFavoriteStatus() async {
-    final String baseUrl = 'https://study-flutter.firebaseio.com/products/${id}.json';
+  void toggleFavoriteStatus(String token, String userId) async {
+    final String baseUrl = 'https://study-flutter.firebaseio.com/userFavorites/${userId}/${id}.json?auth=${token}';
     final oldStatus = isFavorite;
 
     isFavorite = !isFavorite;
     notifyListeners();
 
     try {
-      final response = await http.patch(
+      final response = await http.put(
         baseUrl,
-        body: json.encode({
-          'isFavorite': isFavorite,
-        })
+        body: json.encode(isFavorite)
       );
 
       if (response.statusCode >= 400) {

@@ -8,10 +8,12 @@ import './product.dart';
 
 class Products with ChangeNotifier {
   final String baseUrl = 'https://study-flutter.firebaseio.com/products';
+  final String favoriteUrl = 'https://study-flutter.firebaseio.com/userFavorites';
   final String url = 'https://study-flutter.firebaseio.com/products.json';
   final String authToken;
+  final String userId;
 
-  Products(this.authToken, this._items);
+  Products(this.authToken, this.userId, this._items);
 
   List<Product> _items = [];
 
@@ -77,16 +79,21 @@ class Products with ChangeNotifier {
     }
   }
 
-  Future<void> getProducts() async {
+  Future<void> getProducts({bool filterByUser = false}) async {
+    final filterString = filterByUser ? '&orderBy="creatorId"&equalTo="${userId}"' : '';
+
     try {
-      final response = await http.get(addAuth(url));
+      final response = await http.get(addAuth(url) + filterString);
       final extractedData = json.decode(response.body) as Map<String, dynamic>;
       final List<Product> loadedProducts = [];
 
       if (extractedData == null) {
         return;
       }
-
+      
+      final favoriteResponse = await http.get(addAuth('${favoriteUrl}/${userId}.json'));
+      final favoriteData = json.decode(favoriteResponse.body);
+      
       extractedData.forEach((productId, productData) {
         loadedProducts.add(Product(
           id: productId,
@@ -94,7 +101,7 @@ class Products with ChangeNotifier {
           description: productData['description'],
           price: productData['price'],
           imageUrl: productData['imageUrl'],
-          isFavorite: productData['isFavorite'],
+          isFavorite: (favoriteData == null) ? false : favoriteData[productId] ?? false,
         ));
       });
 
@@ -116,6 +123,7 @@ class Products with ChangeNotifier {
           'description': product.description,
           'imageUrl': product.imageUrl,
           'isFavorite': product.isFavorite,
+          'creatorId': userId,
         })
       );
 

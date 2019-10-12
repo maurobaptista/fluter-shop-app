@@ -21,16 +21,24 @@ class OrderItem {
 class Orders with ChangeNotifier {
   List<OrderItem> _orders = [];
   final String baseUrl = 'https://study-flutter.firebaseio.com/orders';
+  final String authToken;
+
+  Orders(this.authToken, this._orders);
 
   List<OrderItem> get orders {
     return [..._orders];
+  }
+
+  String addAuth(String url)
+  {
+    return '${url}?auth=${authToken}';
   }
 
   Future<void> addOrder(List<CartItem> cartProducts, double total) async {
     final timestamp = DateTime.now();
 
     final response = await http.post(
-      '${baseUrl}.json',
+      addAuth('${baseUrl}.json'),
       body: json.encode({
         'amount': total,
         'products': cartProducts.map((product) => {
@@ -55,7 +63,7 @@ class Orders with ChangeNotifier {
 
   Future<void> getOrders() async {
     try {
-      final response = await http.get('${baseUrl}.json',);
+      final response = await http.get(addAuth('${baseUrl}.json',));
       final extractedData = json.decode(response.body) as Map<String, dynamic>;
       final List<OrderItem> loadedOrders = [];
 
