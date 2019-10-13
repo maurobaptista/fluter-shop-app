@@ -22,8 +22,9 @@ class Orders with ChangeNotifier {
   List<OrderItem> _orders = [];
   final String baseUrl = 'https://study-flutter.firebaseio.com/orders';
   final String authToken;
+  final String userId;
 
-  Orders(this.authToken, this._orders);
+  Orders(this.authToken, this.userId, this._orders);
 
   List<OrderItem> get orders {
     return [..._orders];
@@ -38,7 +39,7 @@ class Orders with ChangeNotifier {
     final timestamp = DateTime.now();
 
     final response = await http.post(
-      addAuth('${baseUrl}.json'),
+      addAuth('${baseUrl}/${userId}.json'),
       body: json.encode({
         'amount': total,
         'products': cartProducts.map((product) => {
@@ -63,7 +64,7 @@ class Orders with ChangeNotifier {
 
   Future<void> getOrders() async {
     try {
-      final response = await http.get(addAuth('${baseUrl}.json',));
+      final response = await http.get(addAuth('${baseUrl}/${userId}.json',));
       final extractedData = json.decode(response.body) as Map<String, dynamic>;
       final List<OrderItem> loadedOrders = [];
 
