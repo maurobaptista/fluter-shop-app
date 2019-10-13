@@ -159,7 +159,8 @@ class _AuthCardState extends State<AuthCard> {
 
       _showErroDialog(errorMessage);
     } catch (error) {
-      _showErroDialog('Could not authenticate');
+      final errorMessage = 'Could not authenticate';
+      _showErroDialog(errorMessage);
     }
 
     setState(() {

@@ -1,8 +1,10 @@
 import 'dart:core';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:shop_app/models/http_exception.dart';
+import 'dart:async';
 
 import 'dart:convert';
 import '../config/credentials.dart';
@@ -11,11 +13,11 @@ class Auth with ChangeNotifier {
   String _token;
   DateTime _expiryDate;
   String _userId;
+  Timer _authTimer;
 
   final String _api = Credentials.FIREBASE_WEB_API_KEY;
 
   bool get isAuth {
-    print(_expiryDate);
     return token != null;
   }
 
@@ -32,6 +34,36 @@ class Auth with ChangeNotifier {
     }
 
     return null;
+  }
+
+  Future<void> logout() async {
+    _token = null;
+    _expiryDate = null;
+    _userId = null;
+    if (_authTimer != null) {
+      _authTimer.cancel();
+      _authTimer = null;
+    }
+
+    notifyListeners();
+
+    final prefs = await SharedPreferences.getInstance();
+    prefs.remove('userData');
+  }
+
+  void _autoLogout() {
+    if (_authTimer != null) {
+      _authTimer.cancel();
+    }
+
+    final timeToExpiry =_expiryDate.difference(DateTime.now()).inSeconds;
+
+    _authTimer = Timer(
+      Duration(
+        seconds: timeToExpiry,
+      ),
+      logout
+    );
   }
 
   Future<void> _authenticate(String email, String password, String urlSegment) async {
@@ -61,10 +93,43 @@ class Auth with ChangeNotifier {
         ),
       );
 
+      _autoLogout();
+
       notifyListeners();
+
+      final prefs = await SharedPreferences.getInstance();
+      final userData = json.encode({
+        'token': _token,
+        'userId': _userId,
+        'expiryDate': _expiryDate.toIso8601String(),
+      });
+
+      prefs.setString('userData', userData);
     } catch(error) {
       throw error;
     }
+  }
+
+  Future<bool> tryAutoLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (! prefs.containsKey('userData')) {
+      return false;
+    }
+
+    final userData = json.decode(prefs.getString('userData')) as Map<String, Object>;
+
+    if (DateTime.parse(userData['expiryDate']).isBefore(DateTime.now())) {
+      return false;
+    }
+
+    _token = userData['token'];
+    _userId = userData['userId'];
+    _expiryDate = DateTime.parse(userData['expiryDate']);
+
+    notifyListeners();
+    _autoLogout();
+
+    return true;
   }
 
   Future<void> signup(String email, String password) async {
